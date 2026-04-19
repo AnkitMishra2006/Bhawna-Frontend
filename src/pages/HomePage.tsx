@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/accordion';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
+import { useAuth } from '@/contexts/AuthContext';
 import heroIllustration from '@/assets/illustration-hero.png';
 import captureIllustration from '@/assets/illustration-capture.png';
 import analyseIllustration from '@/assets/illustration-analyse.png';
@@ -20,7 +21,7 @@ const stats = [
   { value: '7', label: 'Emotions detected' },
   { value: '5fps', label: 'Real-time analysis' },
   { value: '2', label: 'AI models compared' },
-  { value: '0ms', label: 'Data leaves device' },
+  { value: '100%', label: 'Local processing' },
 ];
 
 const features = [
@@ -32,7 +33,7 @@ const features = [
   {
     icon: Gauge,
     title: 'Side-by-side benchmarking',
-    desc: 'Run our custom EmotionNet against DeepFace on the same input and watch them disagree in real time.',
+    desc: "Run EmotionNet against DeepFace on the same frame and watch them agree — or disagree — in real time.",
   },
   {
     icon: Sparkles,
@@ -42,7 +43,7 @@ const features = [
   {
     icon: Shield,
     title: 'Local-first by design',
-    desc: 'Your video never touches a database. Frames are scored, summarised, and discarded on the spot.',
+    desc: 'Your video never leaves your machine. Frames are scored, summarised, and discarded — nothing is stored.',
   },
 ];
 
@@ -82,7 +83,11 @@ const faqs = [
   },
   {
     q: 'Can I run this without a backend?',
-    a: 'You need the FastAPI servers running on ports 8000 (EmotionNet) and 8001 (DeepFace). The frontend will surface a clear connection error if either is unreachable.',
+    a: 'You need the FastAPI servers running locally — port 8000 for EmotionNet, port 8001 for DeepFace. The frontend will show a clear connection error if either is unreachable. Both servers run on your machine; nothing is hosted remotely.',
+  },
+  {
+    q: 'Why do I need to sign in?',
+    a: "Signing in gates access to the analysis tools and keeps your sessions private. We never store video, images, or facial data — your account simply identifies who's using the models.",
   },
 ];
 
@@ -93,6 +98,7 @@ const steps = [
 ];
 
 export default function HomePage() {
+  const { isAuthenticated, user } = useAuth();
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Aurora backdrop */}
@@ -130,7 +136,9 @@ export default function HomePage() {
           >
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full surface-2 hairline text-xs text-muted-foreground mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Two open models · live on your device
+              {isAuthenticated && user
+                ? `Welcome back, ${user.name?.split(' ')[0] || 'friend'}`
+                : 'Two open models · live on your device'}
             </span>
 
             <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-[88px] leading-[0.95] text-balance max-w-5xl">
@@ -141,8 +149,8 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-8 text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed text-balance">
-              EmotionTrack is a research-grade facial affect analyser. Drop in a video,
-              go live with your webcam, and watch two AI models read the room in real time.
+              Bhawna is a research-grade facial affect analyser. Drop in a video, go live with your webcam,
+              and let two AI models read the room — frame by frame, in real time.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row gap-3">
@@ -273,7 +281,7 @@ export default function HomePage() {
         {/* FEATURES */}
         <section className="max-w-[1200px] mx-auto px-6 py-24">
           <div className="max-w-2xl mb-16">
-            <span className="text-xs uppercase tracking-[0.2em] text-primary">Why EmotionTrack</span>
+            <span className="text-xs uppercase tracking-[0.2em] text-primary">Why Bhawna</span>
             <h2 className="font-serif text-4xl md:text-5xl mt-4 leading-tight text-balance">
               Built for people who care about{' '}
               <em className="italic text-muted-foreground">what the model is actually seeing.</em>
@@ -352,7 +360,7 @@ export default function HomePage() {
             <div className="md:col-span-7 flex items-end">
               <p className="text-lg text-muted-foreground leading-relaxed">
                 Whether you ship videos, study affect, or watch users tap through prototypes —
-                EmotionTrack turns reactions into structured signal you can actually compare.
+                Bhawna turns reactions into structured signal you can actually compare.
               </p>
             </div>
           </div>
@@ -410,15 +418,15 @@ export default function HomePage() {
             <div className="relative px-8 md:px-16 py-20 text-center">
               <Sparkles className="w-7 h-7 text-foreground mx-auto mb-6" />
               <h2 className="font-serif text-4xl md:text-6xl leading-tight max-w-3xl mx-auto text-balance">
-                Point a camera. <em className="italic">See what it sees.</em>
+                See what the <em className="italic">camera sees.</em>
               </h2>
               <p className="mt-6 text-lg text-foreground/80 max-w-xl mx-auto">
-                No accounts. No uploads. Just open it and start.
+                Sign in with Google or email. You'll be analysing in under thirty seconds.
               </p>
               <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
                 <Button asChild size="lg" className="rounded-full h-12 px-7 bg-foreground text-background hover:bg-foreground/90">
                   <Link to="/analyse">
-                    Open the analyser
+                    {isAuthenticated ? 'Open the analyser' : 'Sign in & start'}
                     <ArrowRight className="ml-1 w-4 h-4" />
                   </Link>
                 </Button>

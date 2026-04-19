@@ -7,6 +7,7 @@ import type {
   ServerMessage,
   DEFAULT_SCORES,
 } from '@/types/emotion';
+import { useAuth } from '@/contexts/AuthContext';
 
 const defaultScores: EmotionScores = {
   angry: 0, disgust: 0, fear: 0, happy: 0, neutral: 0, sad: 0, surprise: 0,
@@ -29,6 +30,7 @@ interface UseEmotionWebSocketReturn {
 }
 
 export function useEmotionWebSocket(port: number, sessionId: string): UseEmotionWebSocketReturn {
+  const { getToken } = useAuth();
   const [status, setStatus] = useState<ConnectionStatus>('idle');
   const [currentScores, setCurrentScores] = useState<EmotionScores>({ ...defaultScores });
   const [currentRaw, setCurrentRaw] = useState<EmotionScores>({ ...defaultScores });
@@ -55,7 +57,11 @@ export function useEmotionWebSocket(port: number, sessionId: string): UseEmotion
     setConfidence(0);
     setFaceDetected(false);
 
-    const ws = new WebSocket(`ws://localhost:${port}/ws/${sessionId}`);
+    const token = getToken();
+    const url = token
+      ? `ws://localhost:${port}/ws/${sessionId}?token=${encodeURIComponent(token)}`
+      : `ws://localhost:${port}/ws/${sessionId}`;
+    const ws = new WebSocket(url);
 
     ws.onopen = () => setStatus('connected');
 
@@ -90,6 +96,11 @@ export function useEmotionWebSocket(port: number, sessionId: string): UseEmotion
           wsRef.current = null;
         } else if (msg.type === 'error') {
           console.error('WS error message:', msg.message);
+        } else if ((msg as { type: string }).type === 'auth_error') {
+          console.error('WS auth error:', (msg as { message?: string }).message);
+          setStatus('error');
+          ws.close();
+          wsRef.current = null;
         }
       } catch (e) {
         console.error('Failed to parse WS message:', e);
@@ -106,7 +117,7 @@ export function useEmotionWebSocket(port: number, sessionId: string): UseEmotion
     };
 
     wsRef.current = ws;
-  }, [port, sessionId]);
+  }, [port, sessionId, getToken]);
 
   const disconnect = useCallback(() => {
     closedByUsRef.current = true;

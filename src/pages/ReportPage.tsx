@@ -25,8 +25,8 @@ export default function ReportPage() {
       <div className="min-h-screen bg-background">
         <SiteNav />
         <div className="max-w-2xl mx-auto px-6 py-32 text-center space-y-6">
-          <h1 className="font-serif text-5xl">No session yet</h1>
-          <p className="text-muted-foreground">Run an analysis to generate a report.</p>
+          <h1 className="font-serif text-5xl">No report yet</h1>
+          <p className="text-muted-foreground">Run an analysis first — we'll generate a detailed emotional reading when you're done.</p>
           <Button asChild className="rounded-full bg-foreground text-background hover:bg-foreground/90">
             <Link to="/analyse">Open analyser</Link>
           </Button>
@@ -47,7 +47,7 @@ export default function ReportPage() {
   const top = distData[0];
 
   const downloadReport = () => {
-    const content = `EmotionTrack Session Report\nModel: ${backendLabel}\nDuration: ${duration}s\nFrames: ${history.length}\n\n${report}`;
+    const content = `Bhawna Session Report\nModel: ${backendLabel}\nDuration: ${duration}s\nFrames: ${history.length}\n\n${report}`;
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

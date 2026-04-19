@@ -3,10 +3,15 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import HomePage from "./pages/HomePage";
 import AnalysePage from "./pages/AnalysePage";
 import ComparePage from "./pages/ComparePage";
 import ReportPage from "./pages/ReportPage";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+import AuthCallbackPage from "./pages/AuthCallbackPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -17,13 +22,18 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/analyse" element={<AnalysePage />} />
-          <Route path="/compare" element={<ComparePage />} />
-          <Route path="/report" element={<ReportPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            <Route path="/analyse" element={<ProtectedRoute><AnalysePage /></ProtectedRoute>} />
+            <Route path="/compare" element={<ProtectedRoute><ComparePage /></ProtectedRoute>} />
+            <Route path="/report" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

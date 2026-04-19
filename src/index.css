@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Editorial dark palette — warm ink + violet accent */
+    --background: 240 10% 4%;
+    --foreground: 40 20% 94%;
+
+    --card: 240 8% 7%;
+    --card-foreground: 40 20% 94%;
+
+    --popover: 240 8% 7%;
+    --popover-foreground: 40 20% 94%;
+
+    --primary: 258 90% 70%;
+    --primary-foreground: 240 10% 4%;
+    --primary-glow: 280 85% 75%;
+
+    --secondary: 240 6% 12%;
+    --secondary-foreground: 40 20% 94%;
+
+    --muted: 240 6% 11%;
+    --muted-foreground: 240 5% 58%;
+
+    --accent: 32 90% 65%;
+    --accent-foreground: 240 10% 4%;
+
+    --destructive: 0 72% 58%;
+    --destructive-foreground: 40 20% 94%;
+
+    --border: 240 6% 14%;
+    --input: 240 6% 14%;
+    --ring: 258 90% 70%;
+
+    --radius: 1rem;
+
+    --sidebar-background: 240 8% 7%;
+    --sidebar-foreground: 40 20% 94%;
+    --sidebar-primary: 258 90% 70%;
+    --sidebar-primary-foreground: 240 10% 4%;
+    --sidebar-accent: 240 6% 12%;
+    --sidebar-accent-foreground: 40 20% 94%;
+    --sidebar-border: 240 6% 14%;
+    --sidebar-ring: 258 90% 70%;
+
+    /* Surfaces */
+    --surface-1: 240 8% 7%;
+    --surface-2: 240 7% 10%;
+    --surface-3: 240 6% 14%;
+
+    /* Emotion colors (HSL) */
+    --emotion-angry: 0 86% 60%;
+    --emotion-disgust: 142 71% 45%;
+    --emotion-fear: 270 67% 62%;
+    --emotion-happy: 48 96% 53%;
+    --emotion-neutral: 215 14% 63%;
+    --emotion-sad: 217 91% 60%;
+    --emotion-surprise: 25 95% 53%;
+
+    /* Gradient + shadow tokens */
+    --gradient-aurora: radial-gradient(ellipse 80% 60% at 50% 0%, hsl(258 90% 70% / 0.18), transparent 60%),
+                        radial-gradient(ellipse 60% 50% at 80% 30%, hsl(280 85% 75% / 0.12), transparent 70%),
+                        radial-gradient(ellipse 50% 40% at 20% 60%, hsl(32 90% 65% / 0.08), transparent 70%);
+    --gradient-ink: linear-gradient(180deg, hsl(240 10% 4%), hsl(240 8% 6%));
+    --gradient-primary: linear-gradient(135deg, hsl(258 90% 70%), hsl(280 85% 75%));
+    --gradient-warm: linear-gradient(135deg, hsl(32 90% 65%), hsl(15 85% 60%));
+
+    --shadow-elevated: 0 30px 80px -20px hsl(258 90% 30% / 0.35), 0 10px 30px -10px hsl(0 0% 0% / 0.5);
+    --shadow-card: 0 1px 0 0 hsl(40 20% 94% / 0.04) inset, 0 20px 40px -20px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 40px hsl(258 90% 70% / 0.35);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.3);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: 'Instrument Serif', 'Times New Roman', serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-primary);
+  }
+
+  .text-gradient-warm {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-warm);
+  }
+
+  .bg-aurora {
+    background-image: var(--gradient-aurora);
+  }
+
+  .surface-1 { background-color: hsl(var(--surface-1)); }
+  .surface-2 { background-color: hsl(var(--surface-2)); }
+  .surface-3 { background-color: hsl(var(--surface-3)); }
+
+  .shadow-elevated { box-shadow: var(--shadow-elevated); }
+  .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-glow { box-shadow: var(--shadow-glow); }
+
+  /* Hairline border that adapts to dark surface */
+  .hairline {
+    box-shadow: inset 0 0 0 1px hsl(var(--border));
+  }
+
+  .hairline-top {
+    box-shadow: inset 0 1px 0 0 hsl(var(--border));
+  }
+
+  /* Subtle grid backdrop */
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.6) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.6) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, black 30%, transparent 70%);
+  }
+
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .glow-pulse {
+    animation: glow-pulse 2.4s ease-in-out infinite;
+  }
+
+  .scanline-overlay {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scanline-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsl(var(--primary) / 0.08) 50%,
+      transparent 100%
+    );
+    animation: scanline 2.4s linear infinite;
+    pointer-events: none;
+  }
+
+  .recording-dot {
+    @apply inline-block w-2 h-2 rounded-full;
+    background: hsl(var(--destructive));
+    animation: recording-pulse 1.4s ease-in-out infinite;
+    box-shadow: 0 0 12px hsl(var(--destructive) / 0.6);
+  }
+
+  /* Marquee / ticker */
+  .animate-marquee {
+    animation: marquee 40s linear infinite;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes recording-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@keyframes badge-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.badge-pop {
+  animation: badge-pop 320ms ease-out;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-12px) rotate(0.4deg); }
+}
+
+.animate-float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}

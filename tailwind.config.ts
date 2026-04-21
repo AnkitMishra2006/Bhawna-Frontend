@@ -1,8 +1,14 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
   prefix: "",
   theme: {
     container: {
@@ -14,9 +20,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['"Instrument Serif"', 'Times New Roman', 'serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        serif: ['"Instrument Serif"', "Times New Roman", "serif"],
+        mono: ['"JetBrains Mono"', "ui-monospace", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -64,13 +70,13 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         emotion: {
-          angry: '#ef4444',
-          disgust: '#22c55e',
-          fear: '#a855f7',
-          happy: '#eab308',
-          neutral: '#94a3b8',
-          sad: '#3b82f6',
-          surprise: '#f97316',
+          angry: "#ef4444",
+          disgust: "#22c55e",
+          fear: "#a855f7",
+          happy: "#eab308",
+          neutral: "#94a3b8",
+          sad: "#3b82f6",
+          surprise: "#f97316",
         },
       },
       borderRadius: {
@@ -104,5 +110,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

@@ -1,10 +1,10 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useRef, type RefObject } from "react";
 
 export function useFrameCapture(
   videoRef: RefObject<HTMLVideoElement | null>,
   onFrame: (base64: string, timestamp: number) => void,
   active: boolean,
-  intervalMs: number = 200
+  intervalMs: number = 120,
 ) {
   const onFrameRef = useRef(onFrame);
   onFrameRef.current = onFrame;
@@ -17,13 +17,13 @@ export function useFrameCapture(
       if (!video || video.paused || video.ended) return;
       if (!video.videoWidth || !video.videoHeight) return;
 
-      const canvas = document.createElement('canvas');
+      const canvas = document.createElement("canvas");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       if (!ctx) return;
       ctx.drawImage(video, 0, 0);
-      const base64 = canvas.toDataURL('image/jpeg', 0.8);
+      const base64 = canvas.toDataURL("image/jpeg", 0.8);
       onFrameRef.current(base64, video.currentTime);
     }, intervalMs);
 

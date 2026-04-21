@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowRight, Camera, Brain, FileText, Zap, Shield, Gauge,
-  Sparkles, Users, GraduationCap, Film, MessageSquare, ChevronRight,
+  Sparkles, Users, GraduationCap, Film, MessageSquare, ChevronRight, Check,
 } from 'lucide-react';
 import { EMOTION_COLORS, EMOTION_EMOJIS, EMOTION_NAMES } from '@/types/emotion';
 import { Button } from '@/components/ui/button';
@@ -95,6 +95,59 @@ const steps = [
   { n: '01', icon: Camera, title: 'Capture', desc: 'Drop a video file or grant webcam access. Nothing uploads — everything runs against your local model server.' },
   { n: '02', icon: Brain, title: 'Analyse', desc: 'Frames stream at 5fps. Both models score seven emotions per frame and a smoothed timeline builds in real time.' },
   { n: '03', icon: FileText, title: 'Report', desc: 'When you stop, Gemini reads the timeline and writes a narrative summary you can download or share.' },
+];
+
+const pricingTiers = [
+  {
+    name: 'Solo',
+    price: 'Free',
+    cadence: 'forever',
+    tagline: 'For curious minds and weekend tinkerers.',
+    cta: 'Start free',
+    href: '/signup',
+    highlight: false,
+    features: [
+      'Webcam & video file analysis',
+      'EmotionNet model (port 8000)',
+      'Up to 3 sessions per day',
+      'Live timeline & score grid',
+      'Local-only processing',
+    ],
+  },
+  {
+    name: 'Studio',
+    price: '$19',
+    cadence: 'per month',
+    tagline: 'For creators, researchers, and small teams shipping work.',
+    cta: 'Go Studio',
+    href: '/signup',
+    highlight: true,
+    features: [
+      'Everything in Solo',
+      'Side-by-side model comparison',
+      'Unlimited sessions & exports',
+      'AI-written narrative reports',
+      'CSV & JSON timeline export',
+      'Priority email support',
+    ],
+  },
+  {
+    name: 'Lab',
+    price: 'Custom',
+    cadence: "let's talk",
+    tagline: 'For universities, labs, and teams that need bespoke setups.',
+    cta: 'Contact us',
+    href: 'mailto:hello@bhawna.app',
+    highlight: false,
+    features: [
+      'Everything in Studio',
+      'Self-hosted on your infrastructure',
+      'Custom models & fine-tuning',
+      'SAML / SSO authentication',
+      'Dedicated success engineer',
+      'Research collaboration & citations',
+    ],
+  },
 ];
 
 export default function HomePage() {
@@ -408,6 +461,99 @@ export default function HomePage() {
               </Accordion>
             </div>
           </div>
+        </section>
+
+        {/* PRICING */}
+        <section id="pricing" className="max-w-[1200px] mx-auto px-6 py-24">
+          <div className="text-center mb-16">
+            <span className="text-xs uppercase tracking-[0.2em] text-primary">Pricing</span>
+            <h2 className="font-serif text-4xl md:text-5xl mt-4 leading-tight text-balance">
+              Honest pricing for <em className="italic">honest signal.</em>
+            </h2>
+            <p className="text-muted-foreground mt-5 max-w-xl mx-auto leading-relaxed">
+              Start free, upgrade when your work needs both models, longer sessions, and AI-written reports.
+              No hidden seats, no surprise overages.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {pricingTiers.map((tier, i) => (
+              <motion.div
+                key={tier.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                className={`relative rounded-2xl p-8 flex flex-col ${
+                  tier.highlight
+                    ? 'surface-2 shadow-elevated border border-primary/40'
+                    : 'surface-1 hairline'
+                }`}
+              >
+                {tier.highlight && (
+                  <>
+                    <div className="absolute -inset-px rounded-2xl bg-gradient-to-b from-primary/30 via-transparent to-transparent pointer-events-none" />
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-foreground text-background text-[10px] font-medium uppercase tracking-widest">
+                      <Sparkles className="w-3 h-3" /> Most loved
+                    </span>
+                  </>
+                )}
+
+                <div className="relative">
+                  <div className="flex items-baseline justify-between mb-1">
+                    <h3 className="font-serif text-2xl">{tier.name}</h3>
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Tier 0{i + 1}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-7 min-h-[2.5rem]">
+                    {tier.tagline}
+                  </p>
+
+                  <div className="flex items-baseline gap-2 mb-8">
+                    <span className="font-serif text-5xl text-foreground">{tier.price}</span>
+                    <span className="text-sm text-muted-foreground">/ {tier.cadence}</span>
+                  </div>
+
+                  <Button
+                    asChild
+                    size="lg"
+                    className={`w-full rounded-full h-11 mb-8 ${
+                      tier.highlight
+                        ? 'bg-foreground text-background hover:bg-foreground/90'
+                        : 'bg-secondary text-foreground hover:bg-secondary/80'
+                    }`}
+                  >
+                    <Link to={tier.href}>
+                      {tier.cta}
+                      <ArrowRight className="ml-1 w-4 h-4" />
+                    </Link>
+                  </Button>
+
+                  <div className="h-px bg-border mb-6" />
+
+                  <ul className="space-y-3.5">
+                    {tier.features.map((feat) => (
+                      <li key={feat} className="flex items-start gap-3 text-sm">
+                        <span
+                          className={`flex items-center justify-center w-5 h-5 rounded-full mt-0.5 shrink-0 ${
+                            tier.highlight ? 'bg-primary/15 text-primary' : 'bg-secondary text-foreground'
+                          }`}
+                        >
+                          <Check className="w-3 h-3" />
+                        </span>
+                        <span className="text-foreground/85 leading-relaxed">{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <p className="text-center text-xs text-muted-foreground mt-10">
+            Prices in USD. Cancel anytime. Local processing means we never see your video — even on paid tiers.
+          </p>
         </section>
 
         {/* CTA */}

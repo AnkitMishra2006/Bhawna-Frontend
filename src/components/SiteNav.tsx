@@ -18,6 +18,7 @@ const links = [
   { to: '/', label: 'Home' },
   { to: '/analyse', label: 'Analyse' },
   { to: '/compare', label: 'Compare' },
+  { to: '/#pricing', label: 'Pricing' },
 ];
 
 export default function SiteNav() {
@@ -58,14 +59,29 @@ export default function SiteNav() {
 
         <div className="hidden md:flex items-center gap-1 surface-2 rounded-full p-1 hairline">
           {links.map((l) => {
-            const active = pathname === l.to;
+            const active = pathname === l.to || (l.to.includes('#') && pathname === '/');
+            const isHash = l.to.includes('#');
+            if (isHash) {
+              return (
+                <a
+                  key={l.to}
+                  href={l.to}
+                  className={cn(
+                    'px-4 py-1.5 text-sm rounded-full transition-all',
+                    'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {l.label}
+                </a>
+              );
+            }
             return (
               <Link
                 key={l.to}
                 to={l.to}
                 className={cn(
                   'px-4 py-1.5 text-sm rounded-full transition-all',
-                  active
+                  pathname === l.to
                     ? 'bg-foreground text-background font-medium'
                     : 'text-muted-foreground hover:text-foreground'
                 )}

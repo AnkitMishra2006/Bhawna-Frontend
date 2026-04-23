@@ -141,7 +141,7 @@ export type ConnectionStatus =
   | "disconnecting"
   | "error";
 
-export type InputMode = "upload" | "webcam";
+export type InputMode = "upload" | "webcam" | "image";
 export type BackendId = "custom" | "deepface";
 
 export interface BackendConfig {

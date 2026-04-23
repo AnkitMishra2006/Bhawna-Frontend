@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import HomePage from "./pages/HomePage";
 import AnalysePage from "./pages/AnalysePage";
+import ImageAnalysePage from "./pages/ImageAnalysePage";
 import ComparePage from "./pages/ComparePage";
 import ReportPage from "./pages/ReportPage";
 import LoginPage from "./pages/LoginPage";
@@ -28,9 +29,38 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
-            <Route path="/analyse" element={<ProtectedRoute><AnalysePage /></ProtectedRoute>} />
-            <Route path="/compare" element={<ProtectedRoute><ComparePage /></ProtectedRoute>} />
-            <Route path="/report" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
+            <Route
+              path="/analyse"
+              element={
+                <ProtectedRoute>
+                  <AnalysePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/image-analyse"
+              element={
+                <ProtectedRoute>
+                  <ImageAnalysePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/compare"
+              element={
+                <ProtectedRoute>
+                  <ComparePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/report"
+              element={
+                <ProtectedRoute>
+                  <ReportPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

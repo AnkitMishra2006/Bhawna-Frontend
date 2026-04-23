@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
   Upload,
   Webcam,
+  Image as ImageIcon,
   Play,
   Square,
   AlertCircle,
@@ -172,6 +173,7 @@ export default function AnalysePage() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null);
   const [uploadAudioStream, setUploadAudioStream] =
     useState<MediaStream | null>(null);
@@ -187,7 +189,10 @@ export default function AnalysePage() {
     useState<ReportContextPayload | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const imageFrameSentRef = useRef(false);
   // Holds the MediaRecorder for webcam audio capture (null when not available).
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioSendQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -203,7 +208,13 @@ export default function AnalysePage() {
 
   const port = BACKENDS[backend].port;
   const backendLabel = BACKENDS[backend].label;
-  const canStart = inputMode === "upload" ? !!videoFile : !!webcamStream;
+  const canStart =
+    inputMode === "upload"
+      ? !!videoFile
+      : inputMode === "webcam"
+        ? !!webcamStream
+        : !!imageFile;
+  const isStreamingMode = inputMode !== "image";
   const ws = useEmotionWebSocket(port, sessionId, () => navigate("/login"));
 
   const handleFrame = (base64: string, timestamp: number) => {
@@ -213,7 +224,7 @@ export default function AnalysePage() {
   useFrameCapture(
     videoRef,
     handleFrame,
-    isRunning && ws.status === "connected",
+    isStreamingMode && isRunning && ws.status === "connected",
     FRAME_CAPTURE_INTERVAL_MS,
   );
 
@@ -292,6 +303,18 @@ export default function AnalysePage() {
     return () => URL.revokeObjectURL(objectUrl);
   }, [inputMode, videoFile]);
 
+  // Attach the selected image file only after the preview <img> node is mounted.
+  useEffect(() => {
+    if (inputMode !== "image" || !imageFile) return;
+    const image = imageRef.current;
+    if (!image) return;
+
+    const objectUrl = URL.createObjectURL(imageFile);
+    image.src = objectUrl;
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [inputMode, imageFile]);
+
   // Bind webcam stream after render for the same reason as upload mode.
   useEffect(() => {
     if (inputMode !== "webcam" || !webcamStream) return;
@@ -316,6 +339,42 @@ export default function AnalysePage() {
     return () => video.removeEventListener("ended", onEnded);
   }, [inputMode]);
 
+  // In image mode, send exactly one frame once the socket is connected.
+  useEffect(() => {
+    if (
+      inputMode !== "image" ||
+      !isRunning ||
+      ws.status !== "connected" ||
+      !imageFile ||
+      imageFrameSentRef.current
+    ) {
+      return;
+    }
+
+    imageFrameSentRef.current = true;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : "";
+      if (dataUrl) {
+        ws.sendFrame(dataUrl, 0);
+      }
+    };
+    reader.readAsDataURL(imageFile);
+  }, [inputMode, isRunning, ws.status, imageFile, ws.sendFrame]);
+
+  // Image analysis is single-shot: stop run-state after first result.
+  useEffect(() => {
+    if (inputMode !== "image" || !isRunning) return;
+    if (ws.frameCount > 0) {
+      setIsRunning(false);
+      ws.disconnect();
+      return;
+    }
+    if (ws.status === "error") {
+      setIsRunning(false);
+    }
+  }, [inputMode, isRunning, ws.frameCount, ws.status, ws.disconnect]);
+
   // Keep the callback ref in sync so video "ended" always triggers latest stop logic.
   useEffect(() => {
     handleStopRef.current = handleStop;
@@ -336,12 +395,41 @@ export default function AnalysePage() {
     return audioSendQueueRef.current;
   };
 
+  const createAudioMediaRecorder = (
+    stream: MediaStream,
+  ): MediaRecorder | null => {
+    if (typeof MediaRecorder === "undefined") return null;
+
+    const preferredMimeTypes = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/ogg;codecs=opus",
+    ];
+
+    const supportedType = preferredMimeTypes.find((type) =>
+      MediaRecorder.isTypeSupported(type),
+    );
+
+    try {
+      if (supportedType) {
+        return new MediaRecorder(stream, {
+          mimeType: supportedType,
+          audioBitsPerSecond: 128000,
+        });
+      }
+      return new MediaRecorder(stream);
+    } catch {
+      return null;
+    }
+  };
+
   const startRecorderFromStream = (stream: MediaStream | null): boolean => {
     if (!stream || typeof MediaRecorder === "undefined") return false;
     const audioTracks = stream.getAudioTracks();
     if (audioTracks.length === 0) return false;
 
-    const recorder = new MediaRecorder(new MediaStream(audioTracks));
+    const recorder = createAudioMediaRecorder(new MediaStream(audioTracks));
+    if (!recorder) return false;
     recorder.ondataavailable = (event) => {
       void queueAudioBlob(event.data);
     };
@@ -382,6 +470,9 @@ export default function AnalysePage() {
       }
 
       uploadAudioSourceNodeRef.current.disconnect();
+      // Keep upload audio audible to the user while also mirroring it to the
+      // recorder stream that feeds backend transcription.
+      uploadAudioSourceNodeRef.current.connect(context.destination);
       uploadAudioSourceNodeRef.current.connect(
         uploadAudioDestinationRef.current,
       );
@@ -463,10 +554,17 @@ export default function AnalysePage() {
     setSubmittedReportContext(null);
     setStartTime(Date.now());
     setElapsed(0);
+
+    if (inputMode === "image") {
+      imageFrameSentRef.current = false;
+      return;
+    }
+
     // For upload mode: reset to start but do NOT play yet.
     // The useEffect watching ws.status will play once "connected".
     if (inputMode === "upload" && videoRef.current) {
       videoRef.current.currentTime = 0;
+      videoRef.current.muted = false;
     }
     // Start audio recording so Whisper can use speech context in the report.
     if (inputMode === "webcam") {
@@ -535,11 +633,26 @@ export default function AnalysePage() {
     }
   };
 
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file?.type.startsWith("image/")) {
+      setImageFile(file);
+    }
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file?.type.startsWith("video/")) {
       setVideoFile(file);
+    }
+  };
+
+  const handleImageDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file?.type.startsWith("image/")) {
+      setImageFile(file);
     }
   };
 
@@ -558,8 +671,8 @@ export default function AnalysePage() {
       setWebcamStream(stream);
       // Create an audio-only MediaRecorder so the backend can transcribe speech.
       const audioTracks = stream.getAudioTracks();
-      if (audioTracks.length > 0 && typeof MediaRecorder !== "undefined") {
-        mediaRecorderRef.current = new MediaRecorder(
+      if (audioTracks.length > 0) {
+        mediaRecorderRef.current = createAudioMediaRecorder(
           new MediaStream(audioTracks),
         );
       }
@@ -588,13 +701,22 @@ export default function AnalysePage() {
   }, [webcamStream, uploadAudioStream]);
 
   const getFaceOverlayStyle = () => {
-    if (!ws.faceDetected || !ws.faceBox || !videoRef.current) return null;
+    if (!ws.faceDetected || !ws.faceBox) return null;
 
-    const video = videoRef.current;
-    const containerWidth = video.clientWidth;
-    const containerHeight = video.clientHeight;
-    const sourceWidth = video.videoWidth || containerWidth;
-    const sourceHeight = video.videoHeight || containerHeight;
+    const mediaElement =
+      inputMode === "image" ? imageRef.current : videoRef.current;
+    if (!mediaElement) return null;
+
+    const containerWidth = mediaElement.clientWidth;
+    const containerHeight = mediaElement.clientHeight;
+    const sourceWidth =
+      inputMode === "image"
+        ? (mediaElement as HTMLImageElement).naturalWidth || containerWidth
+        : (mediaElement as HTMLVideoElement).videoWidth || containerWidth;
+    const sourceHeight =
+      inputMode === "image"
+        ? (mediaElement as HTMLImageElement).naturalHeight || containerHeight
+        : (mediaElement as HTMLVideoElement).videoHeight || containerHeight;
 
     if (
       containerWidth <= 0 ||
@@ -649,12 +771,13 @@ export default function AnalysePage() {
       <PageHeader
         eyebrow="Workspace"
         title="Analyse a session"
-        description="Choose a model, drop in a video or grant webcam access, and watch seven emotions stream live as your subject reacts."
+        description="Choose a model, analyse video, webcam, or a single image, and inspect seven emotion scores with face-box overlays."
         actions={
           <>
             {isRunning && (
               <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="recording-dot" /> Recording
+                <span className="recording-dot" />
+                {inputMode === "image" ? "Analysing image" : "Recording"}
               </span>
             )}
             <ConnectionStatusBadge status={ws.status} port={port} />
@@ -707,11 +830,42 @@ export default function AnalysePage() {
                 >
                   <Webcam className="w-3.5 h-3.5 mr-1.5" /> Live webcam
                 </TabsTrigger>
+                <TabsTrigger
+                  value="image"
+                  disabled={isRunning}
+                  className="data-[state=active]:bg-background"
+                >
+                  <ImageIcon className="w-3.5 h-3.5 mr-1.5" /> Single image
+                </TabsTrigger>
               </TabsList>
             </Tabs>
 
             <div className="flex items-center gap-2">
-              {!isRunning ? (
+              {inputMode === "image" ? (
+                <Button
+                  onClick={handleStart}
+                  disabled={
+                    !canStart ||
+                    ws.status !== "idle" ||
+                    isGeneratingReport ||
+                    isContextDialogOpen ||
+                    isRunning
+                  }
+                  size="lg"
+                  className="rounded-full bg-foreground text-background hover:bg-foreground/90"
+                >
+                  {isRunning ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                      Analysing image...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 mr-1.5" /> Analyze image
+                    </>
+                  )}
+                </Button>
+              ) : !isRunning ? (
                 <Button
                   onClick={handleStart}
                   disabled={
@@ -794,6 +948,36 @@ export default function AnalysePage() {
                     onChange={handleFileChange}
                   />
                 </div>
+              ) : inputMode === "image" && !imageFile ? (
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleImageDrop}
+                  onClick={() => imageInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-border m-4 rounded-xl cursor-pointer hover:border-primary/50 hover:surface-2 transition-all group"
+                >
+                  <img
+                    src={uploadIllustration}
+                    alt=""
+                    aria-hidden="true"
+                    width={120}
+                    height={120}
+                    loading="lazy"
+                    className="w-28 h-28 opacity-60 group-hover:opacity-90 group-hover:-translate-y-1 transition-all duration-500 mb-3"
+                  />
+                  <p className="font-serif text-xl text-foreground">
+                    Drop an image here
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    or click to browse · jpg, png, webp
+                  </p>
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageFileChange}
+                  />
+                </div>
               ) : inputMode === "webcam" && !webcamStream ? (
                 <div className="flex flex-col items-center justify-center aspect-video p-4 gap-4">
                   <img
@@ -823,19 +1007,28 @@ export default function AnalysePage() {
                 </div>
               ) : (
                 <div className="relative aspect-video bg-black overflow-hidden">
-                  <video
-                    ref={videoRef}
-                    controls={inputMode === "upload"}
-                    autoPlay={inputMode === "webcam"}
-                    muted
-                    playsInline
-                    className="w-full h-full object-contain"
-                    style={
-                      inputMode === "webcam"
-                        ? { transform: "scaleX(-1)" }
-                        : undefined
-                    }
-                  />
+                  {inputMode === "image" ? (
+                    <img
+                      ref={imageRef}
+                      alt="Uploaded frame for emotion analysis"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <video
+                      ref={videoRef}
+                      controls={inputMode === "upload"}
+                      autoPlay={inputMode === "webcam"}
+                      muted={inputMode === "webcam"}
+                      playsInline
+                      className="w-full h-full object-contain"
+                      style={
+                        inputMode === "webcam"
+                          ? { transform: "scaleX(-1)" }
+                          : undefined
+                      }
+                    />
+                  )}
+
                   {faceOverlayStyle && (
                     <div
                       className="absolute pointer-events-none"
@@ -850,6 +1043,7 @@ export default function AnalysePage() {
                       </div>
                     </div>
                   )}
+
                   <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-background/70 backdrop-blur text-[11px]">
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${ws.faceDetected ? "bg-emerald-400" : "bg-muted-foreground"} ${ws.faceDetected ? "animate-pulse" : ""}`}
@@ -864,17 +1058,35 @@ export default function AnalysePage() {
                       {ws.faceDetected ? "Face detected" : "No face"}
                     </span>
                   </div>
+
                   {inputMode === "webcam" && (
                     <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-[11px]">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       Live camera
                     </div>
                   )}
+
+                  {inputMode === "image" && (
+                    <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/15 text-primary text-[11px]">
+                      <ImageIcon className="w-3 h-3" />
+                      Single image
+                    </div>
+                  )}
+
                   {isGeneratingReport && (
                     <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px] flex items-center justify-center">
                       <div className="rounded-2xl surface-1 hairline px-5 py-3 flex items-center gap-2.5 text-sm">
                         <Loader2 className="w-4 h-4 animate-spin text-primary" />
                         Creating your report...
+                      </div>
+                    </div>
+                  )}
+
+                  {inputMode === "image" && isRunning && (
+                    <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px] flex items-center justify-center">
+                      <div className="rounded-2xl surface-1 hairline px-5 py-3 flex items-center gap-2.5 text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                        Analysing image...
                       </div>
                     </div>
                   )}
@@ -920,7 +1132,11 @@ export default function AnalysePage() {
         <LiveEmotionChart
           history={ws.history}
           height={300}
-          title="Live emotion stream"
+          title={
+            inputMode === "image"
+              ? "Image emotion profile"
+              : "Live emotion stream"
+          }
         />
       </div>
 

@@ -143,12 +143,41 @@ export default function ComparePage() {
     return audioSendQueueRef.current;
   };
 
+  const createAudioMediaRecorder = (
+    stream: MediaStream,
+  ): MediaRecorder | null => {
+    if (typeof MediaRecorder === "undefined") return null;
+
+    const preferredMimeTypes = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/ogg;codecs=opus",
+    ];
+
+    const supportedType = preferredMimeTypes.find((type) =>
+      MediaRecorder.isTypeSupported(type),
+    );
+
+    try {
+      if (supportedType) {
+        return new MediaRecorder(stream, {
+          mimeType: supportedType,
+          audioBitsPerSecond: 128000,
+        });
+      }
+      return new MediaRecorder(stream);
+    } catch {
+      return null;
+    }
+  };
+
   const startRecorderFromStream = (stream: MediaStream | null): boolean => {
     if (!stream || typeof MediaRecorder === "undefined") return false;
     const audioTracks = stream.getAudioTracks();
     if (audioTracks.length === 0) return false;
 
-    const recorder = new MediaRecorder(new MediaStream(audioTracks));
+    const recorder = createAudioMediaRecorder(new MediaStream(audioTracks));
+    if (!recorder) return false;
     recorder.ondataavailable = (event) => {
       void queueAudioBlob(event.data);
     };
@@ -189,6 +218,8 @@ export default function ComparePage() {
       }
 
       uploadAudioSourceNodeRef.current.disconnect();
+      // Keep upload audio audible locally while mirroring it for backend audio processing.
+      uploadAudioSourceNodeRef.current.connect(context.destination);
       uploadAudioSourceNodeRef.current.connect(
         uploadAudioDestinationRef.current,
       );
@@ -250,6 +281,7 @@ export default function ComparePage() {
     setIsRunning(true);
     if (inputMode === "upload" && videoRef.current) {
       videoRef.current.currentTime = 0;
+      videoRef.current.muted = false;
       stopUploadAudioCapture();
 
       const startedWithAudioContext = startUploadRecorderFromVideoElement(
@@ -313,8 +345,8 @@ export default function ComparePage() {
       setWebcamStream(stream);
       // Create an audio-only MediaRecorder for Whisper transcription.
       const audioTracks = stream.getAudioTracks();
-      if (audioTracks.length > 0 && typeof MediaRecorder !== "undefined") {
-        mediaRecorderRef.current = new MediaRecorder(
+      if (audioTracks.length > 0) {
+        mediaRecorderRef.current = createAudioMediaRecorder(
           new MediaStream(audioTracks),
         );
       }
@@ -495,7 +527,7 @@ export default function ComparePage() {
               ref={videoRef}
               controls={inputMode === "upload"}
               autoPlay={inputMode === "webcam"}
-              muted
+              muted={inputMode === "webcam"}
               playsInline
               className="w-full max-h-72 object-contain rounded-xl bg-black"
               style={

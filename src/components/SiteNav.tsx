@@ -1,6 +1,6 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Github, LogOut, LayoutDashboard } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Github, LogOut, LayoutDashboard } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,17 +8,18 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
-import logo from '@/assets/bhawna-logo.png';
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import logo from "@/assets/bhawna-logo.png";
 
 const links = [
-  { to: '/', label: 'Home' },
-  { to: '/analyse', label: 'Analyse' },
-  { to: '/compare', label: 'Compare' },
-  { to: '/#pricing', label: 'Pricing' },
+  { to: "/", label: "Home" },
+  { to: "/analyse", label: "Analyse" },
+  { to: "/image-analyse", label: "Image Lab" },
+  { to: "/compare", label: "Compare" },
+  { to: "/#pricing", label: "Pricing" },
 ];
 
 export default function SiteNav() {
@@ -28,14 +29,14 @@ export default function SiteNav() {
 
   const handleSignOut = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
-  const initials = (user?.name || user?.email || '?')
-    .split(' ')
+  const initials = (user?.name || user?.email || "?")
+    .split(" ")
     .map((s) => s[0])
     .slice(0, 2)
-    .join('')
+    .join("")
     .toUpperCase();
 
   return (
@@ -59,16 +60,17 @@ export default function SiteNav() {
 
         <div className="hidden md:flex items-center gap-1 surface-2 rounded-full p-1 hairline">
           {links.map((l) => {
-            const active = pathname === l.to || (l.to.includes('#') && pathname === '/');
-            const isHash = l.to.includes('#');
+            const active =
+              pathname === l.to || (l.to.includes("#") && pathname === "/");
+            const isHash = l.to.includes("#");
             if (isHash) {
               return (
                 <a
                   key={l.to}
                   href={l.to}
                   className={cn(
-                    'px-4 py-1.5 text-sm rounded-full transition-all',
-                    'text-muted-foreground hover:text-foreground'
+                    "px-4 py-1.5 text-sm rounded-full transition-all",
+                    "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {l.label}
@@ -80,10 +82,10 @@ export default function SiteNav() {
                 key={l.to}
                 to={l.to}
                 className={cn(
-                  'px-4 py-1.5 text-sm rounded-full transition-all',
+                  "px-4 py-1.5 text-sm rounded-full transition-all",
                   pathname === l.to
-                    ? 'bg-foreground text-background font-medium'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? "bg-foreground text-background font-medium"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {l.label}
@@ -117,28 +119,41 @@ export default function SiteNav() {
                     </AvatarFallback>
                   </Avatar>
                   <span className="hidden sm:inline text-sm text-foreground max-w-[120px] truncate">
-                    {user.name?.split(' ')[0] || 'Account'}
+                    {user.name?.split(" ")[0] || "Account"}
                   </span>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-60 rounded-2xl p-1.5">
+              <DropdownMenuContent
+                align="end"
+                className="w-60 rounded-2xl p-1.5"
+              >
                 <DropdownMenuLabel className="px-3 py-2">
-                  <div className="text-sm text-foreground font-medium truncate">{user.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+                  <div className="text-sm text-foreground font-medium truncate">
+                    {user.name}
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {user.email}
+                  </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => navigate('/analyse')}
+                  onClick={() => navigate("/analyse")}
                   className="rounded-lg cursor-pointer"
                 >
                   <LayoutDashboard className="w-4 h-4 mr-2" />
                   Open analyser
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => navigate('/compare')}
+                  onClick={() => navigate("/compare")}
                   className="rounded-lg cursor-pointer"
                 >
                   Compare models
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => navigate("/image-analyse")}
+                  className="rounded-lg cursor-pointer"
+                >
+                  Analyze image
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -151,7 +166,11 @@ export default function SiteNav() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild size="sm" className="rounded-full bg-foreground text-background hover:bg-foreground/90">
+            <Button
+              asChild
+              size="sm"
+              className="rounded-full bg-foreground text-background hover:bg-foreground/90"
+            >
               <Link to="/login">Sign in</Link>
             </Button>
           )}

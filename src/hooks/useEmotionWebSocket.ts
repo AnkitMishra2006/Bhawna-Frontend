@@ -9,10 +9,7 @@ import type {
   ServerMessage,
 } from "@/types/emotion";
 import { useAuth } from "@/contexts/AuthContext";
-
-// WebSocket host — configurable via VITE_WS_HOST env var (default: localhost).
-const WS_HOST =
-  (import.meta.env.VITE_WS_HOST as string | undefined) || "localhost";
+import { wsBaseFromHttp } from "@/types/emotion";
 
 const defaultScores: EmotionScores = {
   angry: 0,
@@ -47,7 +44,7 @@ interface UseEmotionWebSocketReturn {
 }
 
 export function useEmotionWebSocket(
-  port: number,
+  backendUrl: string,
   sessionId: string,
   onAuthError?: () => void,
 ): UseEmotionWebSocketReturn {
@@ -109,9 +106,10 @@ export function useEmotionWebSocket(
 
       const targetSessionId = sessionIdOverride || sessionId;
       const token = getToken();
+      const wsBase = wsBaseFromHttp(backendUrl);
       const url = token
-        ? `ws://${WS_HOST}:${port}/ws/${targetSessionId}?token=${encodeURIComponent(token)}`
-        : `ws://${WS_HOST}:${port}/ws/${targetSessionId}`;
+        ? `${wsBase}/ws/${targetSessionId}?token=${encodeURIComponent(token)}`
+        : `${wsBase}/ws/${targetSessionId}`;
       const ws = new WebSocket(url);
 
       ws.onopen = () => {
@@ -203,7 +201,7 @@ export function useEmotionWebSocket(
 
       wsRef.current = ws;
     },
-    [port, sessionId, getToken],
+    [backendUrl, sessionId, getToken],
   );
 
   const disconnect = useCallback(() => {

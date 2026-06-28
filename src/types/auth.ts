@@ -6,11 +6,14 @@ export interface User {
   auth_provider?: "email" | "google" | "both";
 }
 
-// Allow the backend URL to be overridden via a Vite env variable so the app
-// can be pointed at a different host without changing source code.
-export const AUTH_BACKEND_URL: string =
+// Base URL of the auth/REST backend. Auth lives on the custom backend, so this
+// defaults to VITE_CUSTOM_BACKEND_URL when VITE_AUTH_BACKEND_URL isn't set.
+// Override via env so the app can point at a deployed backend with no code change.
+export const AUTH_BACKEND_URL: string = (
   (import.meta.env.VITE_AUTH_BACKEND_URL as string | undefined) ||
-  "http://localhost:8000";
+  (import.meta.env.VITE_CUSTOM_BACKEND_URL as string | undefined) ||
+  "http://localhost:8000"
+).replace(/\/+$/, "");
 
 export const TOKEN_STORAGE_KEY = "emotiontrack_token";
 

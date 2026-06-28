@@ -31,11 +31,6 @@ import {
 } from "recharts";
 import reportIllustration from "@/assets/illustration-report.png";
 
-const API_HOST =
-  (import.meta.env.VITE_API_HOST as string | undefined) ||
-  (import.meta.env.VITE_WS_HOST as string | undefined) ||
-  "localhost";
-
 interface LegacyReportState {
   report: string;
   history: HistoryPoint[];
@@ -128,7 +123,7 @@ export default function ReportPage() {
 
       try {
         if (analysisId) {
-          const url = `http://${API_HOST}:${BACKENDS[backendId].port}/analysis/${encodeURIComponent(analysisId)}`;
+          const url = `${BACKENDS[backendId].baseUrl}/analysis/${encodeURIComponent(analysisId)}`;
           const data = await fetchAnalysis(url);
           if (!cancelled && data) {
             setAnalysis(data);
@@ -150,7 +145,7 @@ export default function ReportPage() {
 
           try {
             const url =
-              `http://${API_HOST}:${BACKENDS[backendId].port}/analysis/by-session/` +
+              `${BACKENDS[backendId].baseUrl}/analysis/by-session/` +
               `${encodeURIComponent(sessionId)}?backend=${backendId}`;
             const data = await fetchAnalysis(url);
 
@@ -350,7 +345,7 @@ export default function ReportPage() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Waiting for backend {BACKENDS[backendId].port} to finish and
+                  Waiting for {backendLabel} to finish and
                   save your analysis.
                 </div>
               </div>

@@ -206,7 +206,7 @@ export default function AnalysePage() {
   // Ref so event listeners always call the latest handleStop without stale closure.
   const handleStopRef = useRef<() => void>(() => {});
 
-  const port = BACKENDS[backend].port;
+  const backendUrl = BACKENDS[backend].baseUrl;
   const backendLabel = BACKENDS[backend].label;
   const canStart =
     inputMode === "upload"
@@ -215,7 +215,7 @@ export default function AnalysePage() {
         ? !!webcamStream
         : !!imageFile;
   const isStreamingMode = inputMode !== "image";
-  const ws = useEmotionWebSocket(port, sessionId, () => navigate("/login"));
+  const ws = useEmotionWebSocket(backendUrl, sessionId, () => navigate("/login"));
 
   const handleFrame = (base64: string, timestamp: number) => {
     ws.sendFrame(base64, timestamp);
@@ -780,7 +780,7 @@ export default function AnalysePage() {
                 {inputMode === "image" ? "Analysing image" : "Recording"}
               </span>
             )}
-            <ConnectionStatusBadge status={ws.status} port={port} />
+            <ConnectionStatusBadge status={ws.status} label={backendLabel} />
           </>
         }
       />

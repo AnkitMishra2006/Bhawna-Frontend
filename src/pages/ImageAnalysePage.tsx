@@ -42,9 +42,9 @@ export default function ImageAnalysePage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageFrameSentRef = useRef(false);
 
-  const port = BACKENDS[backend].port;
+  const backendUrl = BACKENDS[backend].baseUrl;
   const backendLabel = BACKENDS[backend].label;
-  const ws = useEmotionWebSocket(port, sessionId, () => navigate("/login"));
+  const ws = useEmotionWebSocket(backendUrl, sessionId, () => navigate("/login"));
 
   const canStart = !!imageFile;
 
@@ -199,7 +199,7 @@ export default function ImageAnalysePage() {
                 <span className="recording-dot" /> Analysing image
               </span>
             )}
-            <ConnectionStatusBadge status={ws.status} port={port} />
+            <ConnectionStatusBadge status={ws.status} label={backendLabel} />
           </>
         }
       />

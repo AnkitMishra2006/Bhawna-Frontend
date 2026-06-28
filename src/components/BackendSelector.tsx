@@ -1,4 +1,4 @@
-import { BACKENDS, type BackendId } from '@/types/emotion';
+import { BACKENDS, backendHostLabel, type BackendId } from '@/types/emotion';
 import { Check } from 'lucide-react';
 
 interface BackendSelectorProps {
@@ -42,7 +42,7 @@ export default function BackendSelector({ selected, onChange, disabled }: Backen
                 </div>
                 <div className="text-xs text-muted-foreground leading-relaxed">{b.description}</div>
                 <div className="text-[10px] mt-2 font-mono uppercase tracking-widest" style={{ color: b.color }}>
-                  Port {b.port}
+                  {backendHostLabel(b.baseUrl)}
                 </div>
               </div>
               {isActive && (

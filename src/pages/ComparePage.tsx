@@ -66,10 +66,10 @@ export default function ComparePage() {
   const uploadAudioDestinationRef =
     useRef<MediaStreamAudioDestinationNode | null>(null);
 
-  const ws1 = useEmotionWebSocket(BACKENDS.custom.port, sessionId1, () =>
+  const ws1 = useEmotionWebSocket(BACKENDS.custom.baseUrl, sessionId1, () =>
     navigate("/login"),
   );
-  const ws2 = useEmotionWebSocket(BACKENDS.deepface.port, sessionId2, () =>
+  const ws2 = useEmotionWebSocket(BACKENDS.deepface.baseUrl, sessionId2, () =>
     navigate("/login"),
   );
 
@@ -414,11 +414,11 @@ export default function ComparePage() {
           <div className="flex flex-wrap gap-2">
             <ConnectionStatusBadge
               status={ws1.status}
-              port={BACKENDS.custom.port}
+              label={BACKENDS.custom.label}
             />
             <ConnectionStatusBadge
               status={ws2.status}
-              port={BACKENDS.deepface.port}
+              label={BACKENDS.deepface.label}
             />
           </div>
         }
@@ -564,7 +564,7 @@ export default function ComparePage() {
                   />
                   <span className="font-serif text-xl">{backend.label}</span>
                 </div>
-                <ConnectionStatusBadge status={ws.status} port={backend.port} />
+                <ConnectionStatusBadge status={ws.status} label={backend.label} />
               </div>
 
               <div className="flex justify-center">

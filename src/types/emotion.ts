@@ -148,26 +148,67 @@ export interface BackendConfig {
   id: BackendId;
   label: string;
   description: string;
-  port: number;
+  /** Full HTTP(S) base URL of this backend, e.g. "http://localhost:8000". */
+  baseUrl: string;
   color: string;
 }
+
+/** Remove any trailing slash so paths can be appended safely. */
+function stripTrailingSlash(url: string): string {
+  return url.replace(/\/+$/, "");
+}
+
+// Per-backend base URLs, overridable via Vite env vars. This lets the app be
+// pointed at deployed backends without touching source — just set these in
+// frontend/.env.local (local) or the hosting provider's env settings (deploy).
+const CUSTOM_BACKEND_URL: string = stripTrailingSlash(
+  (import.meta.env.VITE_CUSTOM_BACKEND_URL as string | undefined) ||
+    "http://localhost:8000",
+);
+const DEEPFACE_BACKEND_URL: string = stripTrailingSlash(
+  (import.meta.env.VITE_DEEPFACE_BACKEND_URL as string | undefined) ||
+    "http://localhost:8001",
+);
 
 export const BACKENDS: Record<BackendId, BackendConfig> = {
   custom: {
     id: "custom",
     label: "Custom EmotionNet",
     description: "Our own CNN trained on the FER dataset",
-    port: 8000,
+    baseUrl: CUSTOM_BACKEND_URL,
     color: "#6366f1",
   },
   deepface: {
     id: "deepface",
     label: "DeepFace",
     description: "Open-source library — mini_XCEPTION model",
-    port: 8001,
+    baseUrl: DEEPFACE_BACKEND_URL,
     color: "#06b6d4",
   },
 };
+
+/**
+ * Convert an HTTP(S) base URL into its WebSocket equivalent:
+ *   http://host:8000  → ws://host:8000
+ *   https://host      → wss://host
+ * Keeping the WS scheme in sync with the backend protocol means it works both
+ * locally (ws) and behind HTTPS in production (wss) with no code changes.
+ */
+export function wsBaseFromHttp(httpUrl: string): string {
+  const url = stripTrailingSlash(httpUrl);
+  if (url.startsWith("https://")) return "wss://" + url.slice("https://".length);
+  if (url.startsWith("http://")) return "ws://" + url.slice("http://".length);
+  return url; // already ws/wss or scheme-relative
+}
+
+/** Short host label for status badges, e.g. "localhost:8000". */
+export function backendHostLabel(baseUrl: string): string {
+  try {
+    return new URL(baseUrl).host;
+  } catch {
+    return baseUrl;
+  }
+}
 
 export const EMOTION_NAMES: EmotionName[] = [
   "angry",
